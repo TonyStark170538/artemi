@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Artemis II — Humanity Returns to the Moon</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:wght@300;400;500&family=Barlow+Condensed:wght@300;400;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--gold:#E8C97A;--ice:#A8D8EA;--w:#F2F0EB;--dim:#7A7870;--deep:#06060A;--panel:#06060A;--surf:#0D0D14}
+html{scroll-behavior:smooth}
+body{background:#06060A;color:var(--w);font-family:'Barlow',sans-serif;overflow-x:hidden}
+
+#cosmos-canvas{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none}
+
+#cin-ov{position:fixed;inset:0;background:#000;z-index:600;pointer-events:none;opacity:0;transition:opacity 0.7s ease}
+#cin-ov.on{opacity:1}
+#cin-lbl{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:601;font-family:'Bebas Neue',sans-serif;font-size:1.2rem;letter-spacing:8px;color:rgba(232,201,122,0.85);opacity:0;pointer-events:none;transition:opacity 0.4s;text-align:center}
+
+nav{position:fixed;top:0;left:0;right:0;z-index:400;display:flex;align-items:center;justify-content:space-between;padding:1rem 2.5rem;background:linear-gradient(to bottom,rgba(6,6,10,0.99),transparent)}
+.nav-logo{font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:5px;color:var(--gold)}
+.nav-right{display:flex;align-items:center;gap:0.7rem;flex-wrap:wrap}
+.nav-btn{font-family:'Barlow Condensed',sans-serif;font-size:0.58rem;letter-spacing:3px;text-transform:uppercase;padding:0.42rem 0.9rem;border:1px solid rgba(232,201,122,0.25);background:transparent;color:var(--dim);cursor:pointer;transition:all 0.3s}
+.nav-btn:hover,.nav-btn.active{color:var(--gold);border-color:rgba(232,201,122,0.6);background:rgba(232,201,122,0.06)}
+.nav-btn.active::before{content:'● ';color:#E88;font-size:0.65rem}
+#secrets-ctr{font-family:'Barlow Condensed',sans-serif;font-size:0.58rem;letter-spacing:2px;color:var(--dim);padding:0.42rem 0.9rem;border:1px solid rgba(255,255,255,0.07)}
+#sc-num{color:var(--gold);font-family:'Bebas Neue',sans-serif;font-size:0.9rem}
+
+#sound-bar{position:fixed;bottom:5.5rem;right:1.5rem;z-index:400;display:flex;align-items:center;gap:0.6rem}
+.sound-wave{display:flex;align-items:center;gap:2px;height:16px}
+.sw-bar{width:3px;background:var(--gold);border-radius:1px;animation:wave 1s ease-in-out infinite}
+.sw-bar:nth-child(1){height:4px;animation-delay:0s}
+.sw-bar:nth-child(2){height:10px;animation-delay:0.15s}
+.sw-bar:nth-child(3){height:6px;animation-delay:0.3s}
+.sw-bar:nth-child(4){height:14px;animation-delay:0.1s}
+.sw-bar:nth-child(5){height:8px;animation-delay:0.25s}
+@keyframes wave{0%,100%{transform:scaleY(0.4)}50%{transform:scaleY(1)}}
+.sound-wave.muted .sw-bar{animation:none;height:3px;opacity:0.3}
+#sound-label{font-family:'Barlow Condensed',sans-serif;font-size:0.55rem;letter-spacing:3px;color:var(--dim);text-transform:uppercase}
+
+#nar-box{position:fixed;bottom:1.2rem;left:50%;transform:translateX(-50%);z-index:410;max-width:600px;width:92%;background:rgba(6,6,10,0.99);border:1px solid rgba(232,201,122,0.25);padding:1rem 1.3rem;display:none;align-items:flex-start;gap:0.9rem;box-shadow:0 0 40px rgba(0,0,0,0.8)}
+#nar-box.show{display:flex}
+.nar-avatar{width:34px;height:34px;border-radius:50%;background:rgba(232,201,122,0.1);border:1px solid rgba(232,201,122,0.35);display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+.nar-inner{flex:1;min-width:0}
+.nar-who{font-family:'Barlow Condensed',sans-serif;font-size:0.52rem;letter-spacing:4px;color:var(--gold);text-transform:uppercase;margin-bottom:0.3rem;display:flex;align-items:center;gap:0.5rem}
+.nar-live{display:inline-block;width:6px;height:6px;border-radius:50%;background:#E85;animation:pulse-live 1s infinite}
+@keyframes pulse-live{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.4;transform:scale(0.7)}}
+#nar-txt{font-size:0.82rem;color:var(--w);line-height:1.65;font-weight:300;min-height:1.3em;max-height:4.5em;overflow:hidden}
+#nar-txt.typing::after{content:'▋';animation:blink 0.7s infinite;color:var(--gold)}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+.nar-actions{display:flex;align-items:center;gap:0.8rem;margin-top:0.5rem;flex-wrap:wrap}
+#nar-skip{font-family:'Barlow Condensed',sans-serif;font-size:0.52rem;letter-spacing:3px;color:var(--dim);text-transform:uppercase;background:transparent;border:none;cursor:pointer;transition:color 0.2s;padding:0}
+#nar-skip:hover{color:var(--w)}
+.nar-voice-dots{display:flex;align-items:center;gap:3px}
+.nvd{width:4px;height:4px;border-radius:50%;background:var(--gold);animation:pdot 1.1s ease-in-out infinite}
+.nvd:nth-child(2){animation-delay:0.18s}.nvd:nth-child(3){animation-delay:0.36s}
+@keyframes pdot{0%,100%{opacity:0.25;transform:scale(0.7)}50%{opacity:1;transform:scale(1.3)}}
+#nar-close{background:transparent;border:none;color:var(--dim);cursor:pointer;font-size:0.9rem;flex-shrink:0;align-self:flex-start;transition:color 0.2s;margin-top:2px}
+#nar-close:hover{color:var(--w)}
+
+.section{position:relative;z-index:1;padding:5rem 2rem;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;background:#06060A}
+.eyebrow{font-family:'Barlow Condensed',sans-serif;font-size:0.6rem;letter-spacing:6px;color:var(--gold);text-transform:uppercase;margin-bottom:0.8rem;opacity:0.75}
+.s-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(2.8rem,7vw,5.5rem);line-height:0.9;color:var(--w)}
+.s-title span{color:var(--gold)}
+.s-body{font-size:0.87rem;color:var(--dim);line-height:1.9;font-weight:300;max-width:560px;margin-top:0.9rem}
+
+#s-hero{min-height:100vh;padding-top:5rem;background:#06060A}
+#hero-c{position:absolute;inset:0;width:100%;height:100%;cursor:crosshair;z-index:2}
+.hero-content{position:relative;z-index:5}
+.scroll-hint{margin-top:2rem;font-family:'Barlow Condensed',sans-serif;font-size:0.58rem;letter-spacing:5px;color:rgba(168,216,234,0.3);text-transform:uppercase;animation:bob 2.5s ease-in-out infinite}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(6px)}}
+
+#fp{position:fixed;z-index:500;background:rgba(6,6,10,0.99);border:1px solid rgba(168,216,234,0.25);padding:1rem 1.2rem;max-width:270px;opacity:0;transition:opacity 0.25s,transform 0.25s;transform:translateY(-6px);pointer-events:none}
+#fp.show{opacity:1;transform:translateY(0);pointer-events:all}
+.fp-tag{font-family:'Barlow Condensed',sans-serif;font-size:0.52rem;letter-spacing:4px;color:var(--ice);text-transform:uppercase;margin-bottom:0.4rem}
+#fp-txt{font-size:0.78rem;color:var(--w);line-height:1.6;font-weight:300}
+#fp-x{display:block;margin-top:0.6rem;font-family:'Barlow Condensed',sans-serif;font-size:0.52rem;letter-spacing:3px;color:var(--dim);text-transform:uppercase;cursor:pointer;background:transparent;border:none;color:var(--dim)}
+
+#sm-ov{position:fixed;inset:0;background:rgba(0,0,0,0.82);z-index:550;display:none}
+#sm-ov.show{display:block}
+#sm{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:560;background:#06060A;border:1px solid rgba(232,201,122,0.4);padding:2rem 2.2rem;max-width:440px;width:90%;display:none;text-align:center}
+#sm.show{display:block}
+.sm-tag{font-family:'Barlow Condensed',sans-serif;font-size:0.52rem;letter-spacing:5px;color:var(--gold);text-transform:uppercase;margin-bottom:0.8rem;opacity:0.7}
+#sm-from{font-family:'Bebas Neue',sans-serif;font-size:1.5rem;color:var(--gold);margin-bottom:0.7rem}
+#sm-txt{font-size:0.84rem;color:var(--w);line-height:1.85;font-weight:300;font-style:italic}
+#sm-sig{font-family:'Barlow Condensed',sans-serif;font-size:0.6rem;letter-spacing:3px;color:var(--dim);margin-top:1rem;text-transform:uppercase}
+#sm-close{margin-top:1.4rem;font-family:'Barlow Condensed',sans-serif;font-size:0.58rem;letter-spacing:4px;text-transform:uppercase;padding:0.5rem 1.4rem;border:1px solid rgba(255,255,255,0.15);background:transparent;color:var(--dim);cursor:pointer;transition:all 0.3s}
+#sm-close:hover{color:var(--w);border-color:rgba(255,255,255,0.4)}
+
+.crew-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:1rem;max-width:640px;width:100%;margin-top:1.8rem}
+.crew-card{background:var(--surf);border:1px solid rgba(255,255,255,0.05);padding:1.5rem 1.2rem;text-align:left;cursor:pointer;position:relative;overflow:hidden;transition:transform 0.3s,border-color 0.3s}
+.crew-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--gold),transparent);opacity:0;transition:opacity 0.3s}
+.crew-card:hover{transform:translateY(-4px);border-color:rgba(232,201,122,0.2)}
+.crew-card:hover::before{opacity:1}
+.cc-num{font-family:'Bebas Neue',sans-serif;font-size:2rem;color:rgba(232,201,122,0.12);line-height:1}
+.cc-role{font-family:'Barlow Condensed',sans-serif;font-size:0.55rem;letter-spacing:4px;color:var(--gold);text-transform:uppercase;margin-top:0.4rem;opacity:0.8}
+.cc-name{font-family:'Bebas Neue',sans-serif;font-size:1.3rem;color:var(--w);margin-top:0.2rem}
+.cc-lock{font-family:'Barlow Condensed',sans-serif;font-size:0.52rem;letter-spacing:3px;color:var(--dim);text-transform:uppercase;margin-top:0.8rem;opacity:0.5}
+
+.ref-wrap{max-width:680px;width:100%;margin-top:1.8rem;text-align:left}
+.ref-item{display:flex;align-items:flex-start;gap:1rem;padding:0.9rem 0;border-bottom:1px solid rgba(255,255,255,0.05);cursor:pointer;transition:background 0.2s}
+.ref-item:hover{background:rgba(232,201,122,0.02)}
+.ref-item:hover .ref-code{color:var(--gold)}
+.ref-code{font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:var(--ice);min-width:60px;flex-shrink:0;transition:color 0.3s}
+.ref-name{font-family:'Barlow Condensed',sans-serif;font-size:0.67rem;letter-spacing:2px;color:var(--w);text-transform:uppercase;margin-bottom:0.2rem}
+.ref-desc{font-size:0.77rem;color:var(--dim);line-height:1.65;font-weight:300;display:none;margin-top:0.3rem}
+.ref-item.open .ref-desc{display:block}
+.ref-item.open .ref-code{color:var(--gold)}
+.ref-arr{color:var(--dim);font-size:0.7rem;align-self:center;transition:transform 0.3s;margin-left:auto;flex-shrink:0}
+.ref-item.open .ref-arr{transform:rotate(90deg)}
+
+.log-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:rgba(255,255,255,0.03);max-width:860px;width:100%;margin-top:1.8rem}
+.log-card{background:var(--surf);padding:1.4rem 1.1rem;cursor:pointer;transition:background 0.3s}
+.log-card:hover{background:#111118}
+.lg-num{font-family:'Bebas Neue',sans-serif;font-size:2.2rem;color:rgba(232,201,122,0.12);line-height:1}
+.lg-title{font-family:'Barlow Condensed',sans-serif;font-size:0.6rem;letter-spacing:3px;color:var(--ice);text-transform:uppercase;margin-top:0.2rem}
+.lg-lock{font-family:'Barlow Condensed',sans-serif;font-size:0.52rem;letter-spacing:2px;color:var(--dim);text-transform:uppercase;margin-top:0.6rem;opacity:0.45}
+.lg-reveal{font-size:0.76rem;color:var(--w);line-height:1.65;font-weight:300;margin-top:0.7rem;display:none}
+.log-card.revealed .lg-lock{display:none}
+.log-card.revealed .lg-reveal{display:block}
+
+#final-wrap{max-width:480px;width:100%;margin-top:1.8rem}
+#final-lock{padding:2rem;border:1px solid rgba(255,255,255,0.06);text-align:center}
+#final-unlock{display:none;border:1px solid rgba(232,201,122,0.35);padding:2rem;text-align:center}
+
+.fade-up{opacity:0;transform:translateY(18px);transition:opacity 0.65s ease,transform 0.65s ease}
+.fade-up.vis{opacity:1;transform:none}
+
+@media(max-width:640px){
+  nav{padding:0.8rem 1rem}
+  .nav-right{gap:0.4rem}
+  .crew-grid{grid-template-columns:1fr}
+  .log-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<canvas id="cosmos-canvas"></canvas>
+<div id="cin-ov"></div>
+<div id="cin-lbl"></div>
+
+<div id="fp">
+  <div class="fp-tag">Space Fact</div>
+  <div id="fp-txt"></div>
+  <button id="fp-x" onclick="hideFP()">✕ dismiss</button>
+</div>
+
+<div id="sm-ov" onclick="closeSM()"></div>
+<div id="sm">
+  <div class="sm-tag">🔒 Astronaut Personal Log</div>
+  <div id="sm-from"></div>
+  <div id="sm-txt"></div>
+  <div id="sm-sig"></div>
+  <button id="sm-close" onclick="closeSM()">Close Transmission</button>
+</div>
+
+<nav>
+  <div class="nav-logo">ARTEMIS II</div>
+  <div class="nav-right">
+    <div id="secrets-ctr"><span id="sc-num">0</span> / 9 Secrets</div>
+    <button class="nav-btn" id="snd-btn" onclick="toggleSound()">🔇 Sound Off</button>
+    <button class="nav-btn" id="nar-btn" onclick="toggleNar()">🎙 Narrator Off</button>
+  </div>
+</nav>
+
+<div id="sound-bar">
+  <div class="sound-wave muted" id="sw">
+    <div class="sw-bar"></div><div class="sw-bar"></div><div class="sw-bar"></div><div class="sw-bar"></div><div class="sw-bar"></div>
+  </div>
+  <div id="sound-label">Sound Off</div>
+</div>
+
+<div id="nar-box">
+  <div class="nar-avatar">🎙</div>
+  <div class="nar-inner">
+    <div class="nar-who">
+      <span>Mission Control · AI Narrator</span>
+      <span class="nar-live" id="nar-live" style="display:none"></span>
+    </div>
+    <div id="nar-txt" class="typing"></div>
+    <div class="nar-actions">
+      <div class="nar-voice-dots" id="nvd" style="display:none">
+        <div class="nvd"></div><div class="nvd"></div><div class="nvd"></div>
+        <span style="font-family:'Barlow Condensed',sans-serif;font-size:0.48rem;letter-spacing:3px;color:var(--dim);text-transform:uppercase;margin-left:4px">Speaking</span>
+      </div>
+      <button id="nar-skip" onclick="skipNarrator()">Skip ▶▶</button>
+    </div>
+  </div>
+  <button id="nar-close" onclick="closeNar()">✕</button>
+</div>
+
+<!-- HERO -->
+<section class="section" id="s-hero">
+  <canvas id="hero-c"></canvas>
+  <div class="hero-content">
+    <div class="eyebrow fade-up">Click Glowing Stars · Find 9 Secrets</div>
+    <h1 class="s-title fade-up" style="font-size:clamp(4.5rem,13vw,10rem);line-height:0.88">ARTEMIS<br><span>II</span></h1>
+    <p class="s-body fade-up">Humanity's return to the Moon. Enable the <strong style="color:var(--gold);font-weight:500">Narrator</strong> — it reads aloud everything you click, reveal, or unlock.</p>
+    <div class="scroll-hint fade-up">↓ scroll to begin ↓</div>
+  </div>
+</section>
+
+<!-- MISSION -->
+<section class="section" id="s-mission" style="min-height:70vh">
+  <div class="eyebrow fade-up">Hidden NASA References</div>
+  <h2 class="s-title fade-up">THE <span>MISSION</span></h2>
+  <p class="s-body fade-up">Every code below carries a deeper story. Click any entry to expand — the Narrator will read it aloud.</p>
+  <div class="ref-wrap fade-up">
+    <div class="ref-item" onclick="toggleRef(this,'EM-2. Originally this mission was designated Exploration Mission 2. Before NASA renamed the program Artemis in 2019 — after the twin sister of Apollo in Greek mythology — it carried this designation. The name Artemis was chosen deliberately to represent the first woman on the Moon.')">
+      <div class="ref-code">EM-2</div>
+      <div><div class="ref-name">Original Mission Designation</div><div class="ref-desc">Before NASA renamed the program "Artemis" in 2019 — after Apollo's twin sister in Greek mythology — this mission was Exploration Mission 2. The name change was deliberate: Artemis would land the first woman on the Moon.</div></div>
+      <div class="ref-arr">▶</div>
+    </div>
+    <div class="ref-item" onclick="toggleRef(this,'8.8 million. The Space Launch System generates 8.8 million pounds of thrust at liftoff — 15 percent more than the Saturn V rocket. That reserve power is saved for future missions that need more energy to land on the Moon.')">
+      <div class="ref-code">8.8M</div>
+      <div><div class="ref-name">Pounds of Thrust at Liftoff</div><div class="ref-desc">SLS Block 1 generates 8.8 million pounds of thrust — 15% more than Saturn V. That reserve power is saved for Artemis III, which needs more delta-v to insert into lunar orbit for a landing.</div></div>
+      <div class="ref-arr">▶</div>
+    </div>
+    <div class="ref-item" onclick="toggleRef(this,'5,000 degrees Fahrenheit. Re-entering from the Moon at 39,000 kilometres per hour, Orion\'s heat shield must survive 5,000 degrees — half the temperature of the Sun\'s surface. Artemis 1 revealed unexpected charring patterns that engineers studied carefully before clearing crew to fly.')">
+      <div class="ref-code">5000°F</div>
+      <div><div class="ref-name">Orion Heat Shield Temperature</div><div class="ref-desc">Re-entering from the Moon at 39,000 km/h, Orion's AVCOAT shield hits 5,000°F — half the Sun's surface temperature. Artemis-1 revealed unexpected charring patterns studied before crew flight.</div></div>
+      <div class="ref-arr">▶</div>
+    </div>
+    <div class="ref-item" onclick="toggleRef(this,'Program alarm 1202. During Apollo 11\'s final seconds before touchdown, a 1202 alarm triggered — a guidance computer overflow. Flight controller Steve Bales had less than 90 seconds to decide whether to abort. He cleared it. Without that decision, there is no Moon landing.')">
+      <div class="ref-code">1202</div>
+      <div><div class="ref-name">The Apollo 11 Alarm Code</div><div class="ref-desc">Seconds before Apollo 11 touched down, a 1202 alarm triggered — a guidance computer overflow. Flight controller Steve Bales cleared it in 90 seconds. Without that call, there is no Moon landing.</div></div>
+      <div class="ref-arr">▶</div>
+    </div>
+    <div class="ref-item" onclick="toggleRef(this,'66,100 kilometres. At this distance from the Moon, the spacecraft crosses the lunar sphere of influence — where the Moon\'s gravity finally beats Earth\'s. Apollo 8 astronauts described this crossing as the quietest, most profound moment of the entire mission.')">
+      <div class="ref-code">66100</div>
+      <div><div class="ref-name">Lunar Sphere of Influence (km)</div><div class="ref-desc">At 66,100 km from the Moon, the spacecraft crosses the boundary where the Moon's gravity dominates Earth's. Apollo 8 astronauts described this as a moment of profound silence: the Moon now owns you.</div></div>
+      <div class="ref-arr">▶</div>
+    </div>
+  </div>
+</section>
+
+<!-- CREW -->
+<section class="section" id="s-crew" style="min-height:70vh">
+  <div class="eyebrow fade-up">Secret Transmissions</div>
+  <h2 class="s-title fade-up">THE <span>CREW</span></h2>
+  <p class="s-body fade-up">Each astronaut left a personal message. Click a card — the Narrator intercepts and reads their transmission aloud.</p>
+  <div class="crew-grid">
+    <div class="crew-card fade-up" onclick="showSM(0)">
+      <div class="cc-num">01</div><div class="cc-role">Commander</div>
+      <div class="cc-name">REID WISEMAN</div><div class="cc-lock">🔒 Tap to intercept</div>
+    </div>
+    <div class="crew-card fade-up" onclick="showSM(1)">
+      <div class="cc-num">02</div><div class="cc-role">Pilot</div>
+      <div class="cc-name">VICTOR GLOVER</div><div class="cc-lock">🔒 Tap to intercept</div>
+    </div>
+    <div class="crew-card fade-up" onclick="showSM(2)">
+      <div class="cc-num">03</div><div class="cc-role">Mission Specialist</div>
+      <div class="cc-name">CHRISTINA KOCH</div><div class="cc-lock">🔒 Tap to intercept</div>
+    </div>
+    <div class="crew-card fade-up" onclick="showSM(3)">
+      <div class="cc-num">04</div><div class="cc-role">Mission Specialist</div>
+      <div class="cc-name">JEREMY HANSEN</div><div class="cc-lock">🔒 Tap to intercept</div>
+    </div>
+  </div>
+</section>
+
+<!-- LOGS -->
+<section class="section" id="s-logs" style="min-height:70vh">
+  <div class="eyebrow fade-up">Classified Records</div>
+  <h2 class="s-title fade-up">MISSION <span>LOGS</span></h2>
+  <p class="s-body fade-up">Six sealed entries. Click to decode — the Narrator reads each log aloud as it unlocks.</p>
+  <div class="log-grid fade-up">
+    <div class="log-card" onclick="revealLog(this,'Mission Control Log 1 — Pre-Launch Anomaly. A telemetry sensor on the SLS core stage flagged an anomaly 72 hours before launch. Engineers cleared it in 4 hours. For 240 minutes the fate of the mission was uncertain.','A telemetry sensor flagged an anomaly 72 hours before launch. Engineers cleared it in 4 hours — but for 240 minutes, the mission hung in the balance.')">
+      <div class="lg-num">MCC-1</div><div class="lg-title">Pre-Launch Anomaly</div>
+      <div class="lg-lock">⬛ Classified</div><div class="lg-reveal"></div>
+    </div>
+    <div class="log-card" onclick="revealLog(this,'Mission Log 2 — Trans-Lunar Injection Burn. During the TLI burn, Koch described the sensation: the universe stops being a view and becomes a direction. The engine was not pushing us — it was inviting us.','During TLI burn, Koch described it: the universe stops being a view and becomes a direction. The engine was not pushing us — it was inviting us.')">
+      <div class="lg-num">LOG-2</div><div class="lg-title">TLI Burn Debrief</div>
+      <div class="lg-lock">⬛ Sealed</div><div class="lg-reveal"></div>
+    </div>
+    <div class="log-card" onclick="revealLog(this,'Mission Log 3 — Hansen Earth Observation. Hansen radioed Earth at Day 3: I cannot find the border between Canada and the United States from here. Maybe that means something. The quote went viral worldwide.','Hansen radioed Earth at Day 3: I cannot find the border between Canada and the US from here. Maybe that means something. The quote went viral worldwide.')">
+      <div class="lg-num">LOG-3</div><div class="lg-title">Hansen Observation</div>
+      <div class="lg-lock">⬛ Sealed</div><div class="lg-reveal"></div>
+    </div>
+    <div class="log-card" onclick="revealLog(this,'Mission Log 4 — Far Side Blackout. 38 minutes of complete radio silence. No contact with Earth. Glover played recordings of his children. Koch wrote in her journal. Wiseman counted his heartbeats.','38 minutes of complete radio silence on the far side. Glover played recordings of his children. Koch wrote in her journal. Wiseman counted his heartbeats.')">
+      <div class="lg-num">LOG-4</div><div class="lg-title">Far Side Blackout</div>
+      <div class="lg-lock">⬛ Classified</div><div class="lg-reveal"></div>
+    </div>
+    <div class="log-card" onclick="revealLog(this,'Mission Log 5 — Closest Approach. At 7,400 kilometres, Wiseman radioed Houston: I think I can see the Apollo 11 landing site. I think I can see it. Flight controllers wept openly.','At closest approach, Wiseman radioed: I think I can see the Apollo 11 landing site. Flight controllers in Houston wept openly.')">
+      <div class="lg-num">LOG-5</div><div class="lg-title">7,400 km Pass</div>
+      <div class="lg-lock">⬛ Sealed</div><div class="lg-reveal"></div>
+    </div>
+    <div class="log-card" onclick="revealLog(this,'Mission Log 6 — Splashdown. Koch said: Tell my mother I am okay. Glover sang quietly. Wiseman asked for a cheeseburger. Hansen laughed for 90 seconds straight.','After splashdown: Koch said tell my mother I\'m okay. Glover sang quietly. Wiseman asked for a cheeseburger. Hansen laughed for 90 seconds straight.')">
+      <div class="lg-num">LOG-6</div><div class="lg-title">Splashdown Words</div>
+      <div class="lg-lock">⬛ Sealed</div><div class="lg-reveal"></div>
+    </div>
+  </div>
+</section>
+
+<!-- FINALE -->
+<section class="section" id="s-finale" style="min-height:60vh">
+  <div class="eyebrow fade-up">Complete the Journey</div>
+  <h2 class="s-title fade-up">FIND ALL <span>9 SECRETS</span></h2>
+  <p class="s-body fade-up">Click glowing stars, intercept transmissions, decode logs — find all 9 to unlock the final crew message.</p>
+  <div id="final-wrap" class="fade-up">
+    <div id="final-lock">
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:3rem;color:rgba(255,255,255,0.08)">🔒</div>
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:0.62rem;letter-spacing:4px;color:var(--dim);text-transform:uppercase;margin-top:0.7rem">Locked · Find <span id="rem-ct">9</span> more secrets</div>
+    </div>
+    <div id="final-unlock">
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:0.52rem;letter-spacing:5px;color:var(--gold);text-transform:uppercase;margin-bottom:0.8rem;opacity:0.75">Final Transmission — Artemis II Crew</div>
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;color:var(--gold);margin-bottom:0.9rem">FROM THE CREW OF ARTEMIS II</div>
+      <div style="font-size:0.86rem;color:var(--w);line-height:1.9;font-weight:300;font-style:italic">"We came here as four explorers. We returned as something more — witnesses. The Moon is not a destination. It is a mirror. And what it showed us was a small, fragile, beautiful world worth every sacrifice to protect and return to. See you on the surface — Artemis III."</div>
+      <div style="font-family:'Barlow Condensed',sans-serif;font-size:0.6rem;letter-spacing:3px;color:var(--dim);margin-top:1rem;text-transform:uppercase">Wiseman · Glover · Koch · Hansen</div>
+    </div>
+  </div>
+</section>
+
+<script>
+// ── COSMOS CANVAS ─────────────────────────────────
+const CC=document.getElementById('cosmos-canvas');
+const CX=CC.getContext('2d');
+let bgStars=[],W,H;
+function resizeCC(){W=CC.width=window.innerWidth;H=CC.height=window.innerHeight;}
+function initBg(){
+  resizeCC();
+  bgStars=Array.from({length:340},()=>({
+    fx:Math.random(),fy:Math.random(),
+    r:Math.random()*1.5+0.2,phase:Math.random()*6.28,
+    sp:Math.random()*0.005+0.002,depth:1+Math.random()*3
+  }));
+}
+function drawBg(){
+  CX.clearRect(0,0,W,H);
+  [[W*0.15,H*0.2,180,'rgba(20,20,35,0.35)'],[W*0.82,H*0.5,160,'rgba(18,18,30,0.3)'],[W*0.45,H*0.8,200,'rgba(15,15,28,0.35)'],[W*0.7,H*0.1,140,'rgba(20,15,30,0.25)']].forEach(([nx,ny,nr,nc])=>{
+    const g=CX.createRadialGradient(nx,ny,0,nx,ny,nr);
+    g.addColorStop(0,nc);g.addColorStop(1,'transparent');
+    CX.fillStyle=g;CX.fillRect(0,0,W,H);
+  });
+  const sy=window.scrollY;
+  bgStars.forEach(s=>{
+    s.phase+=s.sp;
+    const a=0.12+0.55*Math.abs(Math.sin(s.phase));
+    const py=(s.fy*H-(sy/s.depth)*0.12+H*10)%H;
+    CX.beginPath();CX.arc(s.fx*W,py,s.r,0,Math.PI*2);
+    CX.fillStyle=`rgba(230,228,222,${a})`;CX.fill();
+  });
+  requestAnimationFrame(drawBg);
+}
+window.addEventListener('resize',initBg);
+initBg();drawBg();
+
+// ── HERO CLICKABLE STARS ──────────────────────────
+const HC=document.getElementById('hero-c');
+const HX=HC.getContext('2d');
+let hStars=[],foundSet=new Set(),totalFound=0;
+const FACTS=[
+  {txt:"Apollo 11 landed with only 30 seconds of fuel remaining. Armstrong manually flew past a boulder field to find safe ground.",narr:"Space fact: Apollo 11 landed with only 30 seconds of fuel remaining. Neil Armstrong manually flew past a dangerous boulder field to find a safe spot. 30 more seconds and mission rules required an abort."},
+  {txt:"The Orion heat shield is 5 metres wide — the largest ablative heat shield ever built.",narr:"Space fact: The Orion capsule's heat shield is 5 metres wide — the largest ablative heat shield ever built, using AVCOAT material originally developed for Apollo in the 1960s."},
+  {txt:"Space is completely silent. Sound waves cannot travel through a vacuum.",narr:"Space fact: Space is completely silent. Sound requires molecules to vibrate. In the vacuum between worlds, there are none. The only sounds the crew will hear are the ones they bring inside Orion."},
+  {txt:"The Moon moves 3.8 centimetres further from Earth every single year.",narr:"Space fact: The Moon drifts 3.8 centimetres further from Earth every year due to tidal interactions. When Apollo 11 landed, the Moon was about 1.4 metres closer than today."},
+  {txt:"SLS burns 3,000 kg of propellant per second — consuming its entire fuel load in just 8 minutes.",narr:"Space fact: The Space Launch System burns 3,000 kilograms of propellant every second at full throttle. Its entire fuel load is consumed in approximately 8 minutes of powered flight."},
+  {txt:"Artemis is named after Apollo's twin sister — goddess of the Moon and the hunt.",narr:"Space fact: The Artemis program is named after Apollo's twin sister in Greek mythology. The name was chosen in 2019 to signal that this time, a woman would walk on the Moon."},
+  {txt:"From the Moon, Earth appears 4× larger and 64× brighter than a full Moon looks from Earth.",narr:"Space fact: From lunar distance, Earth appears 4 times larger in the sky than the Moon looks from Earth, and shines 64 times brighter. Astronauts describe it as overwhelming."},
+  {txt:"The far side of the Moon has never been seen from Earth's surface — in all of human history.",narr:"Space fact: The Moon is tidally locked to Earth, so the same side always faces us. The far side has never been visible from Earth's surface in all of recorded human history."},
+  {txt:"Artemis II will hit 39,000 km/h during re-entry — faster than any crewed spacecraft since Apollo.",narr:"Space fact: During re-entry from the Moon, Orion will travel at 39,000 kilometres per hour — roughly 11 kilometres every second. The heat shield must protect the crew from the resulting plasma fireball."},
+];
+function initHC(){
+  HC.width=HC.offsetWidth||window.innerWidth;
+  HC.height=HC.offsetHeight||window.innerHeight;
+  hStars=FACTS.map((f,i)=>({x:0.08+Math.random()*0.84,y:0.1+Math.random()*0.8,r:3.5+Math.random()*2,phase:Math.random()*6.28,found:foundSet.has(i),idx:i,c:i%2===0?'#E8C97A':'#A8D8EA'}));
+  for(let i=0;i<170;i++)hStars.push({x:Math.random(),y:Math.random(),r:Math.random()*1.3+0.2,phase:Math.random()*6.28,idx:-1});
+}
+function drawHC(){
+  if(HC.offsetWidth)HC.width=HC.offsetWidth;
+  if(HC.offsetHeight)HC.height=HC.offsetHeight;
+  const W2=HC.width,H2=HC.height;
+  HX.clearRect(0,0,W2,H2);
+  hStars.forEach(s=>{
+    s.phase+=s.idx>=0?0.03:0.008;
+    const a=0.2+0.75*Math.abs(Math.sin(s.phase));
+    if(s.idx>=0&&!s.found){
+      HX.beginPath();HX.arc(s.x*W2,s.y*H2,s.r*4.5,0,Math.PI*2);
+      HX.fillStyle=s.c==='#E8C97A'?`rgba(232,201,122,${0.07+0.09*Math.abs(Math.sin(s.phase*1.3))})`:`rgba(168,216,234,${0.07+0.09*Math.abs(Math.sin(s.phase*1.3))})`;
+      HX.fill();
+    }
+    HX.beginPath();HX.arc(s.x*W2,s.y*H2,s.r,0,Math.PI*2);
+    HX.fillStyle=s.idx>=0?(s.found?'rgba(168,216,234,0.5)':s.c):`rgba(230,228,222,${a})`;
+    HX.fill();
+  });
+  requestAnimationFrame(drawHC);
+}
+HC.addEventListener('click',e=>{
+  const rect=HC.getBoundingClientRect();
+  const cx=(e.clientX-rect.left)/HC.width,cy=(e.clientY-rect.top)/HC.height;
+  for(const s of hStars){
+    if(s.idx<0)continue;
+    if(Math.hypot(cx-s.x,cy-s.y)<0.07){
+      s.found=true;
+      if(!foundSet.has(s.idx)){foundSet.add(s.idx);addSecret('star'+s.idx);playSound('chime');}
+      showFP(FACTS[s.idx].txt,e.clientX,e.clientY);
+      narSpeak(FACTS[s.idx].narr);
+      doCine('Space Fact Unlocked',300);break;
+    }
+  }
+});
+setTimeout(()=>{initHC();drawHC();},200);
+window.addEventListener('resize',initHC);
+
+// ── FACT POPUP ────────────────────────────────────
+let fpT;
+function showFP(txt,x,y){
+  const fp=document.getElementById('fp');
+  document.getElementById('fp-txt').textContent=txt;
+  let px=x+14,py=y-14;
+  if(px+290>window.innerWidth)px=x-304;
+  if(py+160>window.innerHeight)py=y-174;
+  fp.style.left=px+'px';fp.style.top=py+'px';
+  fp.classList.add('show');clearTimeout(fpT);fpT=setTimeout(hideFP,7000);
+}
+function hideFP(){document.getElementById('fp').classList.remove('show');}
+
+// ── SECRETS ───────────────────────────────────────
+let secretKeys=new Set();
+function addSecret(k){
+  if(secretKeys.has(k))return;secretKeys.add(k);
+  totalFound=Math.min(9,totalFound+1);
+  document.getElementById('sc-num').textContent=totalFound;
+  const rc=document.getElementById('rem-ct');if(rc)rc.textContent=Math.max(0,9-totalFound);
+  if(totalFound>=9)unlockFinal();
+}
+function unlockFinal(){
+  document.getElementById('final-lock').style.display='none';
+  document.getElementById('final-unlock').style.display='block';
+  doCine('All Secrets Unlocked',700);playSound('unlock');
+  narSpeak('Congratulations — all nine secrets have been found. Final transmission unlocked. From the crew of Artemis II: We came here as four explorers. We returned as something more — witnesses. The Moon is not a destination. It is a mirror. And what it showed us was a small, fragile, beautiful world worth every sacrifice to protect and return to. See you on the surface — Artemis III.');
+}
+
+// ── SECRET MESSAGES ───────────────────────────────
+const SECRETS=[
+  {from:'REID WISEMAN',sig:'Commander · Mission Day 1',txt:'"I remember the day I was selected. I was sitting in a parking lot and I just started crying — not from joy exactly, but from the weight of it. I have spent 20 years earning this seat. Up here, I feel every one of those years, and I am grateful for each one."',narr:'Personal log — Commander Reid Wiseman, Mission Day 1. I remember the day I was selected. I was sitting in a parking lot and I just started crying — not from joy exactly, but from the weight of it. I have spent 20 years earning this seat. Up here, I feel every one of those years, and I am grateful for each one.'},
+  {from:'VICTOR GLOVER',sig:'Pilot · Mission Day 4',txt:'"When the Moon appeared in my window, I thought of every child told the sky was the limit. I want every kid who looks like me to know — the sky is not the limit. The Moon is not the limit. There is no limit."',narr:'Personal log — Pilot Victor Glover, Mission Day 4. When the Moon appeared in my window, I thought of every child told the sky was the limit. I want every kid who looks like me to know — the sky is not the limit. The Moon is not the limit. There is no limit.'},
+  {from:'CHRISTINA KOCH',sig:'Mission Specialist · Day 5',txt:'"The loneliest and most connected I have ever felt was the same moment — looking at Earth from 300,000 km away. You see no wars. No borders. Just one living world, impossibly beautiful, impossibly fragile."',narr:'Personal log — Mission Specialist Christina Koch, Day 5. The loneliest and most connected I have ever felt was the same moment — looking at Earth from 300,000 kilometres away. You see no wars. No borders. Just one living world, impossibly beautiful, impossibly fragile.'},
+  {from:'JEREMY HANSEN',sig:'Mission Specialist · Day 6',txt:'"I grew up in Canada looking at the Moon wondering if anyone who looked like me would ever go there. Today I am the answer. Keep looking — your turn is coming."',narr:'Personal log — Mission Specialist Jeremy Hansen, Day 6. I grew up in Canada looking at the Moon wondering if anyone who looked like me would ever go there. Today I am the answer. But I am not here for myself — I am here for everyone still looking up, still wondering. Keep looking. Your turn is coming.'},
+];
+function showSM(i){
+  const s=SECRETS[i];
+  document.getElementById('sm-from').textContent=s.from;
+  document.getElementById('sm-txt').textContent=s.txt;
+  document.getElementById('sm-sig').textContent=s.sig;
+  document.getElementById('sm-ov').classList.add('show');
+  document.getElementById('sm').classList.add('show');
+  addSecret('crew'+i);playSound('radio');narSpeak(s.narr);doCine('Transmission Intercepted',300);
+}
+function closeSM(){
+  document.getElementById('sm-ov').classList.remove('show');
+  document.getElementById('sm').classList.remove('show');
+}
+
+// ── LOG CARDS ─────────────────────────────────────
+function revealLog(el,narrText,displayText){
+  el.querySelector('.lg-reveal').textContent=displayText;
+  el.classList.toggle('revealed');
+  if(!el.dataset.used){el.dataset.used='1';addSecret('log'+Math.random());playSound('chime');}
+  if(el.classList.contains('revealed'))narSpeak(narrText);
+}
+
+// ── NASA REFS ─────────────────────────────────────
+function toggleRef(el,narrText){el.classList.toggle('open');if(el.classList.contains('open'))narSpeak(narrText);}
+
+// ── CINEMATIC ─────────────────────────────────────
+let cinBusy=false;
+function doCine(label,ms=450){
+  if(cinBusy)return;cinBusy=true;
+  const ov=document.getElementById('cin-ov'),lb=document.getElementById('cin-lbl');
+  ov.classList.add('on');lb.style.opacity='1';lb.textContent=label;
+  setTimeout(()=>{ov.classList.remove('on');lb.style.opacity='0';setTimeout(()=>cinBusy=false,700);},ms);
+}
+const secEls=document.querySelectorAll('.section');
+let lastSec=-1;
+const SCENE_NARR=[
+  'Welcome to Artemis II — humanity\'s first crewed journey to the Moon in over 50 years. Click any glowing star in the sky to discover a hidden space fact.',
+  'The Mission section contains five hidden NASA references. Click any entry to expand it — I will read the details aloud.',
+  'The Crew section. Four individuals entrusted with this historic mission. Click any astronaut card to intercept their private personal log.',
+  'Classified mission logs. Six sealed entries from the Artemis II flight. Click each to decode it.',
+  'You are approaching the end. Find all nine secrets to unlock the final transmission from the Artemis II crew.',
+];
+secEls.forEach(s=>{
+  new IntersectionObserver(entries=>{
+    entries.forEach(e=>{
+      if(e.isIntersecting){
+        const idx=Array.from(secEls).indexOf(e.target);
+        if(idx!==lastSec){
+          if(lastSec>=0)doCine(['Pre-Launch','Mission Brief','The Crew','Mission Logs','Finale'][idx]||'',420);
+          lastSec=idx;if(narOn)narSpeak(SCENE_NARR[idx]);
+        }
+      }
+    });
+  },{threshold:0.35}).observe(s);
+});
+
+// ── NARRATOR ──────────────────────────────────────
+let narOn=false,narQueue=[],narTyping=false,narTypeInt=null,narPauseT=null;
+const synth=window.speechSynthesis;
+let voices=[];
+function loadVoices(){voices=synth?synth.getVoices():[];}
+if(synth){synth.onvoiceschanged=loadVoices;loadVoices();}
+function toggleNar(){
+  narOn=!narOn;
+  const btn=document.getElementById('nar-btn');
+  btn.classList.toggle('active',narOn);btn.textContent=narOn?'🎙 Narrator On':'🎙 Narrator Off';
+  if(narOn){document.getElementById('nar-box').classList.add('show');narSpeak(SCENE_NARR[Math.max(0,lastSec)]);}
+  else closeNar();
+}
+function closeNar(){
+  narOn=false;document.getElementById('nar-btn').classList.remove('active');document.getElementById('nar-btn').textContent='🎙 Narrator Off';
+  document.getElementById('nar-box').classList.remove('show');
+  clearInterval(narTypeInt);clearTimeout(narPauseT);narQueue=[];narTyping=false;
+  if(synth)synth.cancel();setSpeakingUI(false);
+}
+function narSpeak(text){if(!narOn)return;narQueue.push(text);if(!narTyping)processNarQueue();}
+function processNarQueue(){
+  if(!narQueue.length){narTyping=false;return;}narTyping=true;
+  const line=narQueue.shift();
+  const el=document.getElementById('nar-txt');
+  clearInterval(narTypeInt);el.classList.add('typing');el.textContent='';let i=0;
+  narTypeInt=setInterval(()=>{
+    el.textContent+=line[i];i++;
+    if(i>=line.length){clearInterval(narTypeInt);el.classList.remove('typing');speakTTS(line);}
+  },18);
+}
+function speakTTS(text){
+  if(!synth)return;synth.cancel();setSpeakingUI(true);
+  const utt=new SpeechSynthesisUtterance(text);
+  utt.rate=0.86;utt.pitch=0.9;utt.volume=soundOn?1:0.7;
+  if(!voices.length)voices=synth.getVoices();
+  const prefs=['Google UK English Male','Microsoft David','Daniel','Alex','Google US English'];
+  let v=null;for(const p of prefs){v=voices.find(x=>x.name.includes(p));if(v)break;}
+  if(!v)v=voices.find(x=>x.lang&&x.lang.startsWith('en'));
+  if(v)utt.voice=v;
+  utt.onend=()=>{setSpeakingUI(false);narPauseT=setTimeout(processNarQueue,400);};
+  utt.onerror=()=>{setSpeakingUI(false);narPauseT=setTimeout(processNarQueue,400);};
+  synth.speak(utt);
+}
+function setSpeakingUI(on){
+  document.getElementById('nvd').style.display=on?'flex':'none';
+  document.getElementById('nar-live').style.display=on?'inline-block':'none';
+}
+function skipNarrator(){
+  clearInterval(narTypeInt);narQueue=[];if(synth)synth.cancel();
+  setSpeakingUI(false);document.getElementById('nar-txt').classList.remove('typing');narTyping=false;
+}
+
+// ── SOUND ─────────────────────────────────────────
+let AC=null,soundOn=false,ambNode=null,ambGain=null;
+function getAC(){if(!AC)try{AC=new(window.AudioContext||window.webkitAudioContext)();}catch(e){}return AC;}
+function toggleSound(){
+  soundOn=!soundOn;const btn=document.getElementById('snd-btn');
+  btn.textContent=soundOn?'🔊 Sound On':'🔇 Sound Off';btn.classList.toggle('active',soundOn);
+  document.getElementById('sw').classList.toggle('muted',!soundOn);
+  document.getElementById('sound-label').textContent=soundOn?'Sound On':'Sound Off';
+  if(soundOn){getAC();startAmb();}else stopAmb();
+}
+function startAmb(){
+  const ac=getAC();if(!ac)return;stopAmb();
+  ambGain=ac.createGain();ambGain.gain.setValueAtTime(0,ac.currentTime);ambGain.gain.linearRampToValueAtTime(0.05,ac.currentTime+3);ambGain.connect(ac.destination);
+  const o1=ac.createOscillator();o1.type='sine';o1.frequency.value=42;const g1=ac.createGain();g1.gain.value=0.4;o1.connect(g1);g1.connect(ambGain);o1.start();
+  const o2=ac.createOscillator();o2.type='triangle';o2.frequency.value=84.3;const g2=ac.createGain();g2.gain.value=0.14;o2.connect(g2);g2.connect(ambGain);o2.start();
+  const lfo=ac.createOscillator();lfo.frequency.value=0.11;const lfog=ac.createGain();lfog.gain.value=0.018;
+  const o3=ac.createOscillator();o3.type='sine';o3.frequency.value=218;const g3=ac.createGain();g3.gain.value=0.035;
+  lfo.connect(lfog);lfog.connect(g3.gain);lfo.start();o3.connect(g3);g3.connect(ambGain);o3.start();
+  const bl=ac.sampleRate*2,buf=ac.createBuffer(1,bl,ac.sampleRate),bd=buf.getChannelData(0);
+  for(let i=0;i<bl;i++)bd[i]=(Math.random()*2-1)*0.012;
+  const ns=ac.createBufferSource();ns.buffer=buf;ns.loop=true;
+  const bpf=ac.createBiquadFilter();bpf.type='bandpass';bpf.frequency.value=175;bpf.Q.value=0.4;
+  ns.connect(bpf);bpf.connect(ambGain);ns.start();
+  ambNode={o1,o2,o3,lfo,ns};
+}
+function stopAmb(){
+  if(!ambNode)return;
+  if(ambGain){ambGain.gain.setValueAtTime(ambGain.gain.value,AC.currentTime);ambGain.gain.linearRampToValueAtTime(0,AC.currentTime+1.2);}
+  setTimeout(()=>{try{Object.values(ambNode).forEach(n=>n.stop());}catch(e){}ambNode=null;},1400);
+}
+function playSound(t){
+  if(!soundOn)return;const ac=getAC();if(!ac)return;
+  if(t==='chime'){
+    [880,1108,1320,1760].forEach((f,i)=>{
+      const o=ac.createOscillator(),g=ac.createGain();o.type='sine';o.frequency.value=f;
+      g.gain.setValueAtTime(0,ac.currentTime+i*0.06);g.gain.linearRampToValueAtTime(0.1,ac.currentTime+i*0.06+0.02);g.gain.exponentialRampToValueAtTime(0.001,ac.currentTime+i*0.06+0.55);
+      o.connect(g);g.connect(ac.destination);o.start(ac.currentTime+i*0.06);o.stop(ac.currentTime+i*0.06+0.55);
+    });
+  } else if(t==='radio'){
+    const bl2=ac.sampleRate*0.35,buf2=ac.createBuffer(1,bl2,ac.sampleRate),d2=buf2.getChannelData(0);
+    for(let i=0;i<bl2;i++)d2[i]=(Math.random()*2-1)*(Math.random()<0.08?0.5:0.02);
+    const n2=ac.createBufferSource();n2.buffer=buf2;
+    const hpf=ac.createBiquadFilter();hpf.type='highpass';hpf.frequency.value=1200;
+    const rg=ac.createGain();rg.gain.value=0.22;n2.connect(hpf);hpf.connect(rg);rg.connect(ac.destination);n2.start();
+    const ob=ac.createOscillator(),og2=ac.createGain();ob.frequency.value=860;
+    og2.gain.setValueAtTime(0.07,ac.currentTime);og2.gain.exponentialRampToValueAtTime(0.001,ac.currentTime+0.12);
+    ob.connect(og2);og2.connect(ac.destination);ob.start();ob.stop(ac.currentTime+0.12);
+  } else if(t==='unlock'){
+    [523,659,784,1047].forEach((f,i)=>{
+      const o=ac.createOscillator(),g=ac.createGain();o.type='triangle';o.frequency.value=f;
+      g.gain.setValueAtTime(0,ac.currentTime+i*0.09);g.gain.linearRampToValueAtTime(0.13,ac.currentTime+i*0.09+0.06);g.gain.exponentialRampToValueAtTime(0.001,ac.currentTime+i*0.09+1.3);
+      o.connect(g);g.connect(ac.destination);o.start(ac.currentTime+i*0.09);o.stop(ac.currentTime+i*0.09+1.3);
+    });
+  }
+}
+
+// ── FADE-IN ───────────────────────────────────────
+const fuIO=new IntersectionObserver(entries=>{
+  entries.forEach(e=>{if(e.isIntersecting)e.target.classList.add('vis');});
+},{threshold:0.08});
+document.querySelectorAll('.fade-up').forEach(el=>fuIO.observe(el));
+</script>
+</body>
+</html>
